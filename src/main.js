@@ -1,9 +1,10 @@
-import { appWindow } from "@tauri-apps/api/window";
 import kaplay from "kaplay";
-import { makeBackground } from "./utils";
+import { appWindow } from "@tauri-apps/api/window";
+import { makeBackground, goToGame } from "./utils";
 import { SCALE_FACTOR } from "./constants";
 import { makePlayer } from "./player";
 import { saveSystem } from "./save";
+import { makeScoreBox } from "./scoreBox";
 
 const k = kaplay({
   width: 1280,
@@ -54,8 +55,8 @@ k.scene("start", async () => {
   map.add([k.sprite("obstacles"), k.pos(), k.area(), { speed: 100 }]);
 
   await saveSystem.load();
-  if (!saveSystem.data.max) {
-    saveSystem.data.max = 0;
+  if (!saveSystem.data.maxScore) {
+    saveSystem.data.maxScore = 0;
     await saveSystem.save();
   }
 
@@ -77,23 +78,18 @@ k.scene("start", async () => {
     k.anchor("center"),
   ]);
 
-  const goToGame = () => {
-    k.play("confirm");
-    k.go("main");
-  };
+  playBtn.onClick(() => goToGame(k));
 
-  playBtn.onClick(goToGame);
+  k.onKeyPress("space", () => goToGame(k));
 
-  k.onKeyPress("space", goToGame);
-
-  k.onGamepadButtonPress("south", goToGame);
+  k.onGamepadButtonPress("south", () => goToGame(k));
 });
 
 k.scene("main", async () => {
   let score = 0;
 
-  const colliders = await (await fetch("./colllidersData.json")).json();
-  const colllidersData = colliders.data;
+  const colliders = await (await fetch("./collidersData.json")).json();
+  const collidersData = colliders.data;
 
   makeBackground(k);
 
@@ -130,7 +126,7 @@ k.scene("main", async () => {
     score += 1;
   });
 
-  for (const collider of colllidersData) {
+  for (const collider of collidersData) {
     platforms.add([
       k.area({
         shape: new k.Rect(k.vec2(0), collider.width, collider.height),
@@ -141,20 +137,21 @@ k.scene("main", async () => {
     ]);
   }
 
-  k.add([
-    k.rect(k.width(), 50),
-    k.pos(0, -100),
-    k.area(),
-    k.fixed(),
-    "obstacle",
-  ]);
+  k.add([k.rect(k.width(), 50), k.pos(0, -100), k.area(), "obstacle"]);
 
   k.add([k.rect(k.width(), 50), k.pos(0, 1000), k.area(), "obstacle"]);
 
   const player = k.add(makePlayer(k));
   player.pos = k.vec2(600, 250);
   player.setControls();
-  player.onCollide("obstacle");
+  player.onCollide("obstacle", async () => {
+    if (player.isDead) return;
+    k.play("hurt");
+    platforms.speed = 0;
+    player.disableControls();
+    k.add(await makeScoreBox(k, k.center(), score));
+    player.isDead = true;
+  });
 });
 
 k.go("start");
