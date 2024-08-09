@@ -14,7 +14,7 @@ export async function makeScoreBox(k, pos, score) {
     k.pos(pos),
     k.color(k.Color.fromHex("#d7f2f7"), k.area(), k.anchor("center")),
     k.outline(4, k.Color.fromHex("#14638e")),
-    k.fixed(),
+    //k.fixed(),
   ]);
 
   container.add([
@@ -42,7 +42,7 @@ export async function makeScoreBox(k, pos, score) {
     k.text(`Previous best rank: ${computeRank(saveSystem.data.maxScore)}`),
     k.color(k.Color.fromHex("#14638e")),
     k.area(),
-    k.pos(-240, -0),
+    k.pos(-240, 0),
   ]);
 
   const restartBtn = container.add([
