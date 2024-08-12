@@ -12,9 +12,11 @@ export async function makeScoreBox(k, pos, score) {
   const container = k.make([
     k.rect(600, 500),
     k.pos(pos),
-    k.color(k.Color.fromHex("#d7f2f7"), k.area(), k.anchor("center")),
+    k.color(k.Color.fromHex("#d7f2f7")),
+    k.area(),
+    k.anchor("center"),
     k.outline(4, k.Color.fromHex("#14638e")),
-    //k.fixed(),
+    k.fixed(),
   ]);
 
   container.add([
